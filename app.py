@@ -3,10 +3,11 @@ from typing import BinaryIO
 from uuid import uuid4
 from flask import Flask, jsonify, request, abort, send_from_directory, render_template
 from flask_cors import CORS
-from db import setup_db
 from sqlalchemy.exc import IntegrityError
 import imghdr
 import re
+from db import setup_db
+from db.models import User
 from config import ProductionConfig
 
 
