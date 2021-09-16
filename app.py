@@ -1,14 +1,14 @@
 from os import path, mkdir
 from typing import BinaryIO
 from uuid import uuid4
-from sqlalchemy.exc import IntegrityError
+from marshmallow.exceptions import ValidationError
 from flask import Flask, jsonify, request, abort, send_from_directory, render_template
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_cors import CORS
 import imghdr
-import re
 from db import setup_db
 from db.models import User
+from db.schemas import user_schema, login_schema
 from config import ProductionConfig
 
 
@@ -20,6 +20,7 @@ def validate_image(stream: BinaryIO):
     format = imghdr.what(None, header)
     # jpeg normally uses jpg file extension
     return format if format != "jpeg" else "jpg"
+
 
 def create_app(config=ProductionConfig):
     ''' create and configure the app '''
@@ -72,14 +73,10 @@ def create_app(config=ProductionConfig):
 
     @app.post("/api/login")
     def login():
-        data = request.get_json() or {}
-        if 'email' not in data or 'password' not in data:
-            abort(400, 'email and password expected in request body')
-        email = str(data.get('email'))
-        password = str(data.get('password'))
-        user: User = User.query.filter_by(email=email).one_or_none()
-        if not user or not user.checkpw(password):
-            abort(422, 'username or password is not correct')
+        data = login_schema.load(request.json)
+        user: User = User.query.filter_by(email=data['email']).scalar()
+        if not user or not user.checkpw(data['password']):
+            abort(422, 'Email or password is not correct.')
 
         return jsonify({
             'success': True,
@@ -88,76 +85,38 @@ def create_app(config=ProductionConfig):
 
     @app.post("/api/register")
     def register():
-        data = request.get_json() or {}
-        required_fields = ['name', 'email', 'password']
-        # abort if any required field doesnot exist in request body
-        for field in required_fields:
-            if field not in data:
-                abort(400, '%s is required' % field)
-
-        name = str(data.get('name')).lower().strip()
-        email = str(data.get('email')).lower().strip()
-        password = str(data.get('password')).lower()
-
-        # validating data
-        if re.match(app.config['EMAIL_PATTERN'], email) is None:
-            abort(422, 'Email is not valid')
-        if len(password) < 8:
-            abort(422, 'Password have to be at least 8 characters in length')
-
-        new_user = User(name, email, password)
-
-        try:
-            new_user.insert()
-        except IntegrityError:
-            # Integrity error means a unique value already exist in a different record
-            abort(422, "Email is already in use")
+        result = user_schema.load(request.json)
+        new_user = User(**result)
+        new_user.insert()
 
         return jsonify({
             'success': True,
-            'token': create_access_token(identity=new_user.id)
+            'token': create_access_token(identity=new_user.id),
         })
 
     ### HANDLING ERRORS ###
 
-    @app.errorhandler(404)
-    def not_found(error):
-        return jsonify({
-            'success': False,
-            'message': error.description,
-            'error': 404
-        }), 404
+    @app.errorhandler(Exception)
+    def default_error_handler(error):
+        app.logger.exception(error)
+        try:
+            message = error.description
+            code = error.code
+        except AttributeError:
+            message = "Something when wrong."
+            code = 500
 
-    @app.errorhandler(400)
-    def bad_request(error):
         return jsonify({
             'success': False,
-            'message': error.description,
-            'error': 400
-        }), 400
+            'message': message,
+        }), code
 
-    @app.errorhandler(422)
-    def un_processable(error):
+    @app.errorhandler(ValidationError)
+    def marshmallow_error_handler(error):
         return jsonify({
             'success': False,
-            'message': error.description,
-            'error': 422
+            'message': 'The given data was invalid.',
+            'errors': error.messages,
         }), 422
-
-    @app.errorhandler(405)
-    def method_not_allowed(error):
-        return jsonify({
-            'success': False,
-            'message': error.description,
-            'error': 405
-        }), 405
-
-    @app.errorhandler(413)
-    def too_large(error):
-        return jsonify({
-            'success': False,
-            'message': error.description,
-            'error': 413
-        }), 413
 
     return app

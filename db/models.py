@@ -1,14 +1,10 @@
-from typing import Text
 import bcrypt
 from datetime import datetime
-from sqlalchemy import exc, Column, Integer, VARCHAR, Text, DateTime
-from sqlalchemy.sql.sqltypes import LargeBinary
+from sqlalchemy import exc, Column, Integer, VARCHAR, Text, DateTime, LargeBinary
 from db import db
-from flask import request
+
 
 class BaseModel:
-    ''' Helper class witch add basic methods to sub models '''
-
     def __init__(self):
         ''' Generate new orm object '''
         pass
@@ -39,10 +35,6 @@ class BaseModel:
             db.session.rollback()
             raise e
 
-    def format(self):
-        ''' return data as a dict witch can be seralized '''
-        pass
-
 
 class User(db.Model, BaseModel):
     __tablename__ = 'users'
@@ -70,20 +62,3 @@ class User(db.Model, BaseModel):
         '''
         self.password = bcrypt.hashpw(
             bytes(password, 'utf-8'), bcrypt.gensalt(12))
-
-    def format(self):
-        # prepend uploads endpoint to self.avatar
-        avatar = self.avatar
-        if (avatar):
-            try:
-                # will fail if called outside an endpoint
-                avatar = request.root_url + 'uploads/' + avatar
-            except RuntimeError:
-                pass
-
-        return {
-            'name': self.name,
-            'email': self.email,
-            'avatar': avatar,
-            'created_at': self.created_at
-        }
