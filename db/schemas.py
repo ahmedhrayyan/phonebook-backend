@@ -1,5 +1,6 @@
-from marshmallow import Schema, fields, schema, validate, validates, ValidationError
+from marshmallow import Schema, fields, validate, validates, ValidationError, post_load
 from db.models import User
+
 
 class UserSchema(Schema):
     name = fields.Str(required=True)
@@ -13,11 +14,18 @@ class UserSchema(Schema):
         if User.query.filter_by(email=value).scalar():
             raise ValidationError("Already in use.")
 
+    @post_load
+    def clean_data(self, data, **kwargs):
+        data['name'] = data['name'].strip()
+        return data
+
+
 user_schema = UserSchema()
 
 
 class LoginSchema(Schema):
     email = fields.Email(required=True)
     password = fields.Str(required=True)
+
 
 login_schema = LoginSchema()
