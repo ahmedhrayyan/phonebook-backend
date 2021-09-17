@@ -73,6 +73,7 @@ class Contact(db.Model, BaseModel):
     name = Column(VARCHAR, nullable=False)
     email = Column(VARCHAR, nullable=True)
     avatar = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
     phones = db.relationship(
         'Phone', backref="contact", order_by='desc(Phone.id)', lazy=True, cascade='all')
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

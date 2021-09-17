@@ -62,6 +62,7 @@ class ContactSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
     email = fields.Email(required=False)
+    notes = fields.Str(required=False)
     phones = fields.List(fields.Nested(
         PhoneSchema(exclude=['contact_id'])), required=True)
 
