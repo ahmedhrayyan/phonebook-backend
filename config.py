@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
@@ -17,6 +18,7 @@ class Config(object):
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
     JWT_ERROR_MESSAGE_KEY = 'message'
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=30)
 
 
 class ProductionConfig(Config):

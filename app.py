@@ -26,8 +26,8 @@ def create_app(config=ProductionConfig):
     ''' create and configure the app '''
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config)
-    CORS(app)
     JWTManager(app)
+    CORS(app)
     setup_db(app)
 
     ### ENDPOINTS ###
@@ -94,9 +94,7 @@ def create_app(config=ProductionConfig):
     @app.get("/api/contacts")
     @jwt_required()
     def get_contacts():
-        current_user = get_jwt_identity()
-        contacts = Contact.query.filter_by(user_id=current_user).all()
-
+        contacts = Contact.query.filter_by(user_id=get_jwt_identity()).all()
         return jsonify({
             'data': contact_schema.dump(contacts, many=True)
         })
@@ -143,11 +141,10 @@ def create_app(config=ProductionConfig):
     @app.delete("/api/contacts/<int:id>")
     @jwt_required()
     def delete_contact(id):
-        current_user = get_jwt_identity()
         contact: Contact = Contact.query.get(id)
         if not contact:
             abort(404, 'Contact not found.')
-        if contact.user_id != current_user:
+        if contact.user_id != get_jwt_identity():
             abort(403)
 
         contact.delete()
