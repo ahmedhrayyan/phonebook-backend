@@ -11,4 +11,4 @@ The project is part of [Google developer student club su](https://www.linkedin.c
 If you have an issue, please open it in the issues tab and we will respond ASAP.
 
 ## Documentation
-Please check [wiki](https://github.com/ahmedhrayyan/sal-backend/wiki) for Details about Getting Started, Deployment and API Reference
+Please check [wiki](https://github.com/ahmedhrayyan/phonebook-backend/wiki) for Details about Getting Started, Deployment and API Reference
