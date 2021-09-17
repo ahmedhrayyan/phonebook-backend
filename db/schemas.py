@@ -44,7 +44,7 @@ class PhoneSchema(Schema):
             raise ValidationError("Do not exist.")
 
     @validates('contact_id')
-    def validate_type(self, value):
+    def validate_contact(self, value):
         if not Contact.query.get(value):
             raise ValidationError("Do not exist.")
 
