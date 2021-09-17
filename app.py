@@ -7,8 +7,8 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_requir
 from flask_cors import CORS
 import imghdr
 from db import setup_db
-from db.models import Contact, Phone, User
-from db.schemas import ContactSchema, PhoneSchema, user_schema, login_schema, contact_schema, phone_schema
+from db.models import Contact, Phone, Type, User
+from db.schemas import ContactSchema, PhoneSchema, user_schema, login_schema, contact_schema, phone_schema, type_schema
 from config import ProductionConfig
 
 
@@ -200,6 +200,13 @@ def create_app(config=ProductionConfig):
 
         return jsonify({
             'deleted_id': id
+        })
+
+    @app.get("/api/types")
+    def get_types():
+        types = Type.query.all()
+        return jsonify({
+            'data': type_schema.dump(types, many=True)
         })
 
     ### HANDLING ERRORS ###

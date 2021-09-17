@@ -160,3 +160,8 @@ class TestCase(unittest.TestCase):
         res = self.client().delete('/api/phones/%i' % id, headers=self.auth_header)
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json['deleted_id'], id)
+
+    def test_get_types(self):
+        res = self.client().get('/api/types')
+        self.assertEqual(res.status_code, 200)
+        self.assertIsInstance(res.json['data'], list)

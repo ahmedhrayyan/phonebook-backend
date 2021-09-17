@@ -32,6 +32,12 @@ class LoginSchema(Schema):
 login_schema = LoginSchema()
 
 
+class TypeSchema(Schema):
+    id = fields.Int(dump_only=True)
+    value = fields.Str(required=True)
+
+type_schema = TypeSchema()
+
 class PhoneSchema(Schema):
     id = fields.Int(dump_only=True)
     value = fields.Str(required=True)
