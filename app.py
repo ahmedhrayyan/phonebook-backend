@@ -240,9 +240,10 @@ def create_app(config=ProductionConfig):
         # create basic types
         types = [Type('mobile'), Type('home'), Type('work'), Type('Other')]
         try:
-            db.session.add(types)
+            db.session.add_all(types)
             db.session.commit()
-        except Exception:
+        except Exception as e:
             db.session.rollback()
+            raise e
 
     return app
