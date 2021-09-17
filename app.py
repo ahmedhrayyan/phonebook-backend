@@ -6,7 +6,7 @@ from flask import Flask, jsonify, request, abort, send_from_directory, render_te
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_cors import CORS
 import imghdr
-from db import setup_db
+from db import setup_db, db
 from db.models import Contact, Phone, Type, User
 from db.schemas import ContactSchema, PhoneSchema, user_schema, login_schema, contact_schema, phone_schema, type_schema
 from config import ProductionConfig
@@ -232,5 +232,17 @@ def create_app(config=ProductionConfig):
             'message': 'The given data was invalid.',
             'errors': error.messages,
         }), 400
+
+    ### COMMANDS ###
+
+    @app.cli.command('db_seed')
+    def db_seed():
+        # create basic types
+        types = [Type('mobile'), Type('home'), Type('work'), Type('Other')]
+        try:
+            db.session.add(types)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     return app
