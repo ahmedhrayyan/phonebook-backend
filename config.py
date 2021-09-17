@@ -16,6 +16,8 @@ class Config(object):
     ALLOWED_EXTENSIONS = {'png', 'jpg'}
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
+    JWT_ERROR_MESSAGE_KEY = 'message'
+
 
 class ProductionConfig(Config):
     ''' Extend base config with production config '''

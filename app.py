@@ -6,8 +6,6 @@ from flask import Flask, jsonify, request, abort, send_from_directory, render_te
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_cors import CORS
 import imghdr
-
-from sqlalchemy.sql.functions import current_user
 from db import setup_db
 from db.models import Contact, Phone, User
 from db.schemas import ContactSchema, PhoneSchema, user_schema, login_schema, contact_schema, phone_schema
@@ -62,7 +60,6 @@ def create_app(config=ProductionConfig):
         file.save(path.join(app.config['UPLOAD_FOLDER'], filename))
 
         return jsonify({
-            'success': True,
             'path': filename
         })
 
@@ -81,7 +78,6 @@ def create_app(config=ProductionConfig):
             abort(422, 'Email or password is not correct.')
 
         return jsonify({
-            'success': True,
             'token': create_access_token(user.id)
         })
 
@@ -92,7 +88,6 @@ def create_app(config=ProductionConfig):
         new_user.insert()
 
         return jsonify({
-            'success': True,
             'token': create_access_token(identity=new_user.id),
         })
 
@@ -103,7 +98,6 @@ def create_app(config=ProductionConfig):
         contacts = Contact.query.filter_by(user_id=current_user).all()
 
         return jsonify({
-            'success': True,
             'data': contact_schema.dump(contacts, many=True)
         })
 
@@ -122,7 +116,6 @@ def create_app(config=ProductionConfig):
         new_contact.insert()
 
         return jsonify({
-            'success': True,
             'data': contact_schema.dump(new_contact)
         })
 
@@ -144,7 +137,6 @@ def create_app(config=ProductionConfig):
         contact.update()
 
         return jsonify({
-            'success': True,
             'data': ContactSchema(only=('id', *data)).dump(contact)
         })
 
@@ -161,7 +153,6 @@ def create_app(config=ProductionConfig):
         contact.delete()
 
         return jsonify({
-            'success': True,
             'deleted_id': id
         })
 
@@ -177,7 +168,6 @@ def create_app(config=ProductionConfig):
         new_phone.insert()
 
         return jsonify({
-            'success': True,
             'data': phone_schema.dump(new_phone)
         })
 
@@ -197,7 +187,6 @@ def create_app(config=ProductionConfig):
             phone.type_id = data['type_id']
 
         return jsonify({
-            'success': True,
             'data': PhoneSchema(only=('id', *data)).dump(phone)
         })
 
@@ -213,15 +202,15 @@ def create_app(config=ProductionConfig):
         phone.delete()
 
         return jsonify({
-            'success': True,
-            'delete_id': id
+            'deleted_id': id
         })
 
     ### HANDLING ERRORS ###
 
     @app.errorhandler(Exception)
     def default_error_handler(error):
-        app.logger.exception(error)
+        if app.config['TESTING'] is not True:
+            app.logger.exception(error)
         try:
             message = error.description
             code = error.code
@@ -230,16 +219,14 @@ def create_app(config=ProductionConfig):
             code = 500
 
         return jsonify({
-            'success': False,
             'message': message,
         }), code
 
     @app.errorhandler(ValidationError)
     def marshmallow_error_handler(error):
         return jsonify({
-            'success': False,
             'message': 'The given data was invalid.',
             'errors': error.messages,
-        }), 422
+        }), 400
 
     return app
