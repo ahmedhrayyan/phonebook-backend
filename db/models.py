@@ -74,7 +74,7 @@ class Contact(db.Model, BaseModel):
     email = Column(VARCHAR, nullable=True)
     avatar = Column(Text, nullable=True)
     phones = db.relationship(
-        'Phone', order_by='desc(Phone.id)', lazy=True, cascade='all')
+        'Phone', backref="contact", order_by='desc(Phone.id)', lazy=True, cascade='all')
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 

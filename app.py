@@ -6,9 +6,11 @@ from flask import Flask, jsonify, request, abort, send_from_directory, render_te
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 from flask_cors import CORS
 import imghdr
+
+from sqlalchemy.sql.functions import current_user
 from db import setup_db
-from db.models import User
-from db.schemas import user_schema, login_schema
+from db.models import Contact, Phone, User
+from db.schemas import ContactSchema, PhoneSchema, user_schema, login_schema, contact_schema, phone_schema
 from config import ProductionConfig
 
 
@@ -92,6 +94,127 @@ def create_app(config=ProductionConfig):
         return jsonify({
             'success': True,
             'token': create_access_token(identity=new_user.id),
+        })
+
+    @app.get("/api/contacts")
+    @jwt_required()
+    def get_contacts():
+        current_user = get_jwt_identity()
+        contacts = Contact.query.filter_by(user_id=current_user).all()
+
+        return jsonify({
+            'success': True,
+            'data': contact_schema.dump(contacts, many=True)
+        })
+
+    @app.post("/api/contacts")
+    @jwt_required()
+    def post_contact():
+        data = contact_schema.load(request.json)
+        name, phones, email = data['name'], data['phones'], data.get('email')
+
+        new_contact = Contact(get_jwt_identity(), name, email)
+
+        for phone in phones:
+            new_phone = Phone(phone['value'], phone['type_id'], new_contact.id)
+            new_contact.phones.append(new_phone)
+
+        new_contact.insert()
+
+        return jsonify({
+            'success': True,
+            'data': contact_schema.dump(new_contact)
+        })
+
+    @app.patch("/api/contacts/<int:id>")
+    @jwt_required()
+    def update_contact(id):
+        contact: Contact = Contact.query.get(id)
+        if not contact:
+            abort(404, 'Contact not found.')
+        if contact.user_id != get_jwt_identity():
+            abort(403)
+
+        data = contact_schema.load(request.json, partial=True)
+        if 'name' in data:
+            contact.name = data['name']
+        if 'email' in data:
+            contact.email = data['email']
+
+        contact.update()
+
+        return jsonify({
+            'success': True,
+            'data': ContactSchema(only=('id', *data)).dump(contact)
+        })
+
+    @app.delete("/api/contacts/<int:id>")
+    @jwt_required()
+    def delete_contact(id):
+        current_user = get_jwt_identity()
+        contact: Contact = Contact.query.get(id)
+        if not contact:
+            abort(404, 'Contact not found.')
+        if contact.user_id != current_user:
+            abort(403)
+
+        contact.delete()
+
+        return jsonify({
+            'success': True,
+            'deleted_id': id
+        })
+
+    @app.post("/api/phones")
+    @jwt_required()
+    def post_phone():
+        data = phone_schema.load(request.json)
+        contact: Contact = Contact.query.get(data['contact_id'])
+        if contact.user_id != get_jwt_identity():
+            abort(403)
+
+        new_phone = Phone(data['value'], data['type_id'], data['contact_id'])
+        new_phone.insert()
+
+        return jsonify({
+            'success': True,
+            'data': phone_schema.dump(new_phone)
+        })
+
+    @app.patch("/api/phones/<int:id>")
+    @jwt_required()
+    def update_phone(id):
+        phone: Phone = Phone.query.get(id)
+        if not phone:
+            abort(404, "Phone not found.")
+        if phone.contact.user_id != get_jwt_identity():
+            abort(403)
+
+        data = phone_schema.load(request.json, partial=True)
+        if 'value' in data:
+            phone.value = data['value']
+        if 'type_id' in data:
+            phone.type_id = data['type_id']
+
+        return jsonify({
+            'success': True,
+            'data': PhoneSchema(only=('id', *data)).dump(phone)
+        })
+
+    @app.delete("/api/phones/<int:id>")
+    @jwt_required()
+    def delete_phone(id):
+        phone: Phone = Phone.query.get(id)
+        if not phone:
+            abort(404, "Phone not found.")
+        if phone.contact.user_id != get_jwt_identity():
+            abort(403)
+
+        phone.delete()
+
+        return jsonify({
+            'success': True,
+            'delete_id': id
         })
 
     ### HANDLING ERRORS ###

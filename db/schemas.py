@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields, validate, validates, ValidationError, post_load
-from db.models import User
+from sqlalchemy.sql.expression import true
+from db.models import Contact, Type, User
 
 
 class UserSchema(Schema):
@@ -29,3 +30,34 @@ class LoginSchema(Schema):
 
 
 login_schema = LoginSchema()
+
+
+class PhoneSchema(Schema):
+    id = fields.Int(dump_only=True)
+    value = fields.Str(required=True)
+    type_id = fields.Int(required=True)
+    contact_id = fields.Int(required=True)
+
+    @validates('type_id')
+    def validate_type(self, value):
+        if not Type.query.get(value):
+            raise ValidationError("Do not exist.")
+
+    @validates('contact_id')
+    def validate_type(self, value):
+        if not Contact.query.get(value):
+            raise ValidationError("Do not exist.")
+
+
+phone_schema = PhoneSchema()
+
+
+class ContactSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str(required=True)
+    email = fields.Email(required=False)
+    phones = fields.List(fields.Nested(
+        PhoneSchema(exclude=['contact_id'])), required=True)
+
+
+contact_schema = ContactSchema()
