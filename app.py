@@ -183,6 +183,8 @@ def create_app(config=ProductionConfig):
         if 'type_id' in data:
             phone.type_id = data['type_id']
 
+        phone.update()
+
         return jsonify({
             'data': PhoneSchema(only=('id', *data)).dump(phone)
         })
