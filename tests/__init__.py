@@ -96,12 +96,14 @@ class TestCase(unittest.TestCase):
         self.assertIsInstance(res.json['errors'], dict)
 
     def test_post_contact(self):
+        name = 'Ali Hamed'
         res = self.client().post('/api/contacts', headers=self.auth_header,
                                  json={
-                                     'name': 'Ali Hamed',
+                                     'name': name,
                                      'phones': []})
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json['data'], dict)
+        self.assertEqual(res.json['data']['name'], name)
 
     def test_404_patch_contact(self):
         res = self.client().patch('/api/contacts/1000', headers=self.auth_header)
@@ -109,10 +111,13 @@ class TestCase(unittest.TestCase):
         self.assertIsInstance(res.json['message'], str)
 
     def test_patch_contact(self):
+        name = 'Ali Hamed'
         id = self.contact.id
-        res = self.client().patch('/api/contacts/%i' % id, headers=self.auth_header, json={})
+        res = self.client().patch('/api/contacts/%i' %
+                                  id, headers=self.auth_header, json={'name': name})
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json['data'], dict)
+        self.assertEqual(res.json['data']['name'], name)
 
     def test_404_delete_contact(self):
         res = self.client().delete('/api/contacts/1000', headers=self.auth_header)
@@ -131,13 +136,15 @@ class TestCase(unittest.TestCase):
         self.assertIsInstance(res.json['errors'], dict)
 
     def test_post_phone(self):
+        phone = '010xxxx'
         res = self.client().post('/api/phones', headers=self.auth_header,
                                  json={
                                      'type_id': self.type.id,
                                      'contact_id': self.contact.id,
-                                     'value': '010xxxx'})
+                                     'value': phone})
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json['data'], dict)
+        self.assertEqual(res.json['data']['value'], phone)
 
     def test_404_patch_phone(self):
         res = self.client().patch('/api/phones/1000', headers=self.auth_header)
@@ -145,10 +152,13 @@ class TestCase(unittest.TestCase):
         self.assertIsInstance(res.json['message'], str)
 
     def test_patch_phone(self):
+        phone = '010xxxx'
         id = self.phone.id
-        res = self.client().patch('/api/phones/%i' % id, headers=self.auth_header, json={})
+        res = self.client().patch('/api/phones/%i' %
+                                  id, headers=self.auth_header, json={'value': phone})
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json['data'], dict)
+        self.assertEqual(res.json['data']['value'], phone)
 
     def test_404_delete_phone(self):
         res = self.client().delete('/api/phones/1000', headers=self.auth_header)
