@@ -126,7 +126,8 @@ def create_app(config=ProductionConfig):
         if contact.user_id != get_jwt_identity():
             abort(403)
 
-        data = contact_schema.load(request.json, partial=True)
+        data = ContactSchema(exclude=['phones']).load(
+            request.json, partial=True)
         if 'name' in data:
             contact.name = data['name']
         if 'email' in data:
