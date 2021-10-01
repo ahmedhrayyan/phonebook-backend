@@ -128,12 +128,8 @@ def create_app(config=ProductionConfig):
 
         data = ContactSchema(exclude=['phones']).load(
             request.json, partial=True)
-        if 'name' in data:
-            contact.name = data['name']
-        if 'email' in data:
-            contact.email = data['email']
-        if 'notes' in data:
-            contact.notes = data['notes']
+        for key, val in data.items():
+            setattr(contact, key, val)
 
         contact.update()
 
@@ -180,16 +176,15 @@ def create_app(config=ProductionConfig):
         if phone.contact.user_id != get_jwt_identity():
             abort(403)
 
-        data = phone_schema.load(request.json, partial=True)
-        if 'value' in data:
-            phone.value = data['value']
-        if 'type_id' in data:
-            phone.type_id = data['type_id']
+        data = PhoneSchema(exclude=['contact_id']).load(
+            request.json, partial=True)
+        for key, val in data.items():
+            setattr(phone, key, val)
 
         phone.update()
 
         return jsonify({
-            'data': PhoneSchema(only=('id', *data)).dump(phone)
+            'data': PhoneSchema(only=('id', 'contact_id', *data)).dump(phone)
         })
 
     @app.delete("/api/phones/<int:id>")
