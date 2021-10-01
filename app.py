@@ -131,6 +131,8 @@ def create_app(config=ProductionConfig):
             contact.name = data['name']
         if 'email' in data:
             contact.email = data['email']
+        if 'notes' in data:
+            contact.notes = data['notes']
 
         contact.update()
 
