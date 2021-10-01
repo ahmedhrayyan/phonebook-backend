@@ -164,7 +164,7 @@ def create_app(config=ProductionConfig):
         if contact.user_id != get_jwt_identity():
             abort(403)
 
-        new_phone = Phone(data['value'], data['type_id'], data['contact_id'])
+        new_phone = Phone(**data)
         new_phone.insert()
 
         return jsonify({
