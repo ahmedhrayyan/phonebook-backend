@@ -26,7 +26,7 @@ def create_app(config=ProductionConfig):
     ''' create and configure the app '''
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config)
-    JWTManager(app)
+    jwt = JWTManager(app)
     CORS(app)
     setup_db(app)
 
@@ -210,6 +210,10 @@ def create_app(config=ProductionConfig):
         })
 
     ### HANDLING ERRORS ###
+
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error_string):
+        return jsonify(message=error_string), 401
 
     @app.errorhandler(Exception)
     def default_error_handler(error):
