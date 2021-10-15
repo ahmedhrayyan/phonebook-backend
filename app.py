@@ -94,7 +94,7 @@ def create_app(config=ProductionConfig):
     @app.get("/api/contacts")
     @jwt_required()
     def get_contacts():
-        contacts = Contact.query.filter_by(user_id=get_jwt_identity()).all()
+        contacts = Contact.query.filter_by(user_id=get_jwt_identity()).order_by(Contact.id.desc()).all()
         return jsonify({
             'data': contact_schema.dump(contacts, many=True)
         })
@@ -134,7 +134,7 @@ def create_app(config=ProductionConfig):
         contact.update()
 
         return jsonify({
-            'data': ContactSchema(only=('id', *data)).dump(contact)
+            'data': ContactSchema(only=('id', 'phones', *data)).dump(contact)
         })
 
     @app.delete("/api/contacts/<int:id>")
@@ -199,7 +199,8 @@ def create_app(config=ProductionConfig):
         phone.delete()
 
         return jsonify({
-            'deleted_id': id
+            'deleted_id': id,
+            'contact_id': phone.contact_id
         })
 
     @app.get("/api/types")
