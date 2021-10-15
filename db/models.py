@@ -45,8 +45,7 @@ class User(db.Model, BaseModel):
     password = Column(LargeBinary, nullable=False)
     avatar = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    contacts = db.relationship(
-        'Contact', order_by='desc(Contact.id)', lazy=True, cascade='all')
+    contacts = db.relationship('Contact', lazy=True, cascade='all')
 
     def __init__(self, name, email, password):
         self.name = name
@@ -75,7 +74,7 @@ class Contact(db.Model, BaseModel):
     avatar = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
     phones = db.relationship(
-        'Phone', backref="contact", order_by='desc(Phone.id)', lazy=True, cascade='all')
+        'Phone', backref="contact", order_by='asc(Phone.id)', lazy=True, cascade='all')
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
